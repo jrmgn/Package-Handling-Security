@@ -1,0 +1,16 @@
+# Python virtual environment
+venv/
+env/
+__pycache__/
+*.pyc
+
+# Large Datasets (adjust names to your actual folder names)
+datasets/
+data/
+*.zip
+*.jpg
+*.png
+
+# Large Model Weights
+*.pt
+*.pkl
