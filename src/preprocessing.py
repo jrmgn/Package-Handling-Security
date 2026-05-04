@@ -8,7 +8,6 @@ import shutil
 import xml.etree.ElementTree as ET
 import pytesseract
 
-# Path to Tesseract executable (Uncomment and update if Tesseract is not in your PATH)
 pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
 
 def split_dataset(raw_dir, ann_dir, output_root, split_ratio=(0.8, 0.1, 0.1)):
@@ -16,7 +15,6 @@ def split_dataset(raw_dir, ann_dir, output_root, split_ratio=(0.8, 0.1, 0.1)):
     images = glob.glob(os.path.join(raw_dir, "*.jpg")) + glob.glob(os.path.join(raw_dir, "*.png"))
     random.shuffle(images)
 
-    # Calculate split indices
     train_end = int(len(images) * split_ratio[0])
     val_end = train_end + int(len(images) * split_ratio[1])
 
@@ -35,7 +33,6 @@ def split_dataset(raw_dir, ann_dir, output_root, split_ratio=(0.8, 0.1, 0.1)):
             xml_name = os.path.splitext(base_name)[0] + ".xml"
             xml_path = os.path.join(ann_dir, xml_name)
 
-            # Move image and corresponding XML
             shutil.copy(img_path, os.path.join(img_dest, base_name))
             if os.path.exists(xml_path):
                 shutil.copy(xml_path, os.path.join(img_dest, xml_name))
@@ -57,7 +54,6 @@ def extract_ocr_from_xml(image_path, xml_path):
         xmin, ymin = int(bbox.find('xmin').text), int(bbox.find('ymin').text)
         xmax, ymax = int(bbox.find('xmax').text), int(bbox.find('ymax').text)
 
-        # Crop and OCR
         crop = img[ymin:ymax, xmin:xmax]
         text = pytesseract.image_to_string(crop, config='--psm 6').strip()
         ocr_results[label] = text
@@ -65,10 +61,9 @@ def extract_ocr_from_xml(image_path, xml_path):
     return ocr_results
 
 if __name__ == "__main__":
-    # Define your paths
     RAW_DIR = "data/raw"
     ANN_DIR = "data/annotated"
-    OUTPUT_ROOT = "data" # This will split into data/train, data/val, etc.
+    OUTPUT_ROOT = "data" 
 
     split_dataset(RAW_DIR, ANN_DIR, OUTPUT_ROOT)
 
@@ -76,15 +71,12 @@ from skimage.feature import hog, local_binary_pattern
 
 def extract_features(image_path):
     img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
-    img = cv2.resize(img, (128, 128)) # Resize for consistency
+    img = cv2.resize(img, (128, 128))
     
-    # 1. HOG Features (Shape)
     fd, hog_image = hog(img, orientations=8, pixels_per_cell=(16, 16),
                     cells_per_block=(1, 1), visualize=True)
     
-    # 2. LBP (Texture - good for detecting 'noise' in forged areas)
     lbp = local_binary_pattern(img, P=8, R=1, method="uniform")
     lbp_hist, _ = np.histogram(lbp.ravel(), bins=np.arange(0, 11), range=(0, 10))
     
-    # Combine all into one flat array
     return np.hstack([fd, lbp_hist])
